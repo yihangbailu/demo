@@ -1,0 +1,221 @@
+#ifndef SEQLIST_H
+#define SEQLIST_H
+
+#include <iostream>
+using namespace std;
+
+template <typename T>
+class SeqList
+{
+public:
+	SeqList(int sz = defaultSize); // 构造函数
+	SeqList(SeqList<T> &L);   // 复制构造函数
+	~SeqList();
+	SeqList<T>& operator=(SeqList<T> &L); // 重载赋值运算符
+	int getSize() const { return maxSize; } // 计算表最大可容纳表项的个数
+	int getLength() const { return last + 1; } // 计算表长度
+	int search(T& x) const;  // 搜索x在表中位置，函数返回表项序号
+	int locate(int i) const;  // 定位第i个表项，函数返回表项序号
+	T getData(int i) const; // 取第i个表项的值
+	void setData(int i, T& x) { if (i > 0 && i <= last + 1) data[i - 1] = x; } // 用x修改第i个表项的值
+	bool insert(int i, T& x);  // 插入x在第个表项之后
+	bool remove(int i, T &x);  // 删除x
+	bool isEmpty() const { return (last == -1); }  // 判断表空否
+	bool isFull() const { return (last == maxSize - 1); }  // 判断表满否
+	void input();  // 输入
+	void output();  // 输出
+
+	void selectSort(); // 选择排序
+private:
+	T* data;  // 存放数组
+	int maxSize;  // 最大可容纳表项的项数
+	int last;   // 当前已存表项的最后位置(从0开始)
+	void reSize();
+	enum { defaultSize = 100 };
+};
+
+// 构造函数：通过指定参数sz定义数组的长度
+template <typename T>
+SeqList<T>::SeqList(int sz)
+{
+	if (sz > 0)
+		maxSize = sz;
+	else
+		maxSize = defaultSize;
+
+	last = -1;  // 置表的实际长度为空
+	data = new T[maxSize];  // 创建顺序表存储数组
+}
+
+// 复制构造函数：用参数表中给出的已有顺序表初始化新建的顺序表
+template <typename T>
+SeqList<T>::SeqList(SeqList<T> &L)
+{
+	maxSize = L.maxSize;
+	last = L.last;
+
+	data = new T[maxSize];
+	for (int i = 0; i <= last; i++) {
+		data[i] = L.data[i];
+	}
+}
+
+// 重载赋值运算符
+template <typename T>
+SeqList<T>& SeqList<T>::operator=(SeqList<T> &L)
+{
+	maxSize = L.maxSize;
+	last = L.last;
+
+	data = new T[maxSize];
+	for (int i = 0; i <= last; i++) {
+		data[i] = L.data[i];
+	}
+
+	return *this;
+}
+
+// 析构函数
+template <typename T>
+SeqList<T>::~SeqList()
+{
+	if (data)
+		delete[]data;
+}
+
+// 私有函数：扩充顺序表的存储数组空间大小，新数组的元素个数为newSize
+template <typename T>
+void SeqList<T>::reSize() {
+	int newSize = 2 * maxSize;
+	T* newArray = new T[newSize];   // 建立新数组
+
+	for (int i = 0; i <= last; i++)
+		newArray[i] = data[i];
+
+	delete[]data;  // 删除老数组
+
+	data = newArray;
+	maxSize = newSize;
+}
+
+// 搜索函数：在表中顺序搜索与给定值x匹配的表项，找到则函数返回是第几个元素
+template <typename T>
+int SeqList<T>::search(T& x) const
+{
+	for (int i = 0; i <= last; i++) {  // 顺序搜索
+		if (data[i] == x)
+			return i + 1;
+	}
+
+	return 0;   // 搜索失败		
+}
+
+// 定位函数：函数返回第i(1<=i<=last+1)个表项的位置，否则函数返回0，表示定位失败
+template <typename T>
+int SeqList<T>::locate(int i) const
+{
+	if (i >= 1 && i <= last + 1)
+		return i;
+	else
+		return 0;
+}
+
+// 取第i个表项的值
+template <typename T>
+T SeqList<T>::getData(int i) const
+{
+	if (i > 0 && i <= last + 1)
+		return data[i - 1];
+	else {
+		cerr << "位置" << i << "不正确" << endl;
+	}
+}
+
+// 插入函数：插入x在第i(1<=i<=last+2)个表项之后
+template <typename T>
+bool SeqList<T>::insert(int i, T& x)
+{
+	if (last == maxSize - 1)  // 表满，扩充表
+		reSize();
+
+	if (i < 1 || i > last + 2) { // 参数i不合理，不能插入	
+		return false;
+	}
+
+	i--;
+	for (int j = last; j >= i; j--)  // 依次后移，空出第i号位置
+		data[j + 1] = data[j];
+	data[i] = x;          // 插入
+	last++;
+
+	return true;
+}
+
+// 删除函数：从表中删除第i(1<=i<=last+1)个表项，通过x返回被删除的元素值
+template<typename T>
+bool SeqList<T>::remove(int i, T &x)
+{
+	if (last == -1)  // 表空
+		return false;
+	if (i < 1 || i > last + 1)  // 参数i不合理
+		return false;
+
+	x = data[i - 1];
+
+	for (int j = i; j <= last; j++)
+		data[j - 1] = data[j];  // 依次前移
+
+	last--;   // 表长度减1
+
+	return true;
+}
+
+// 输入函数：建立顺序表
+template <typename T>
+void SeqList<T>::input()
+{
+
+	while (1) {
+		cout << "开始建立顺序表，请输入表中元素个数: ";
+		cin >> last;  // 输入元素的个数
+		last--;
+		if ((last >= 0) && (last <= maxSize - 1))
+			break;
+		cout << "表元素个数输入有误，范围不能超过" << maxSize - 1 << "，且不能小于0" << endl;
+	}
+
+	cout << "请输入表元素：" << endl;
+	for (int i = 0; i <= last; i++) {  // 逐个输入表元素
+		cout << "#" << i + 1 << ": ";
+		cin >> data[i];
+	}
+}
+
+// 输出函数
+template <typename T>
+void SeqList<T>::output()
+{
+	cout << "顺序表为：" << endl;
+	for (int i = 0; i <= last; i++)  // 逐个输出表元素
+		cout << "#" << i + 1 << ": " << data[i] << endl;
+}
+
+// 对n个元素按非递减的顺序排序
+template <typename T>
+void SeqList<T>::selectSort()
+{
+	int temp, i, j, k;
+	for (int i = 0; i < last; i++) {  // 从data[i]检查到data[last-1]，最小的整数在data[k]
+		k = i;
+		for (j = i + 1; j <= last; j++)
+			if (data[j] < data[k])
+				k = j;    // k指示当前找到的最小整数
+		if (i != k) {     // 交换data[i]与data[k]
+			temp = data[i];
+			data[i] = data[k];
+			data[k] = temp;
+		}
+	}
+}
+
+#endif  // SEQLIST_H
